@@ -19,12 +19,30 @@ def create(
     request: schema.MenuItemIngredientCreate,
     db: Session = Depends(get_db)
 ):
-    return controller.create(db=db, request=request)
+    return controller.create(
+        db=db,
+        request=request
+    )
 
 
 @router.get("/", response_model=List[schema.MenuItemIngredient])
-def read_all(db: Session = Depends(get_db)):
-    return controller.read_all(db=db)
+def read_all(
+    db: Session = Depends(get_db)
+):
+    return controller.read_all(
+        db=db
+    )
+
+
+@router.get("/availability/{menu_item_id}")
+def check_ingredient_availability(
+    menu_item_id: int,
+    db: Session = Depends(get_db)
+):
+    return controller.check_ingredient_availability(
+        db=db,
+        menu_item_id=menu_item_id
+    )
 
 
 @router.get(
@@ -57,7 +75,10 @@ def update(
     )
 
 
-@router.delete("/{menu_item_ingredient_id}", status_code=204)
+@router.delete(
+    "/{menu_item_ingredient_id}",
+    status_code=204
+)
 def delete(
     menu_item_ingredient_id: int,
     db: Session = Depends(get_db)

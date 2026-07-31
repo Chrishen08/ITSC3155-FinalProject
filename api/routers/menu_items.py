@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -19,15 +19,43 @@ def create(
     request: schema.MenuItemCreate,
     db: Session = Depends(get_db)
 ):
-    return controller.create(db=db, request=request)
+    return controller.create(
+        db=db,
+        request=request
+    )
 
 
 @router.get("/", response_model=List[schema.MenuItem])
-def read_all(db: Session = Depends(get_db)):
-    return controller.read_all(db=db)
+def read_all(
+    db: Session = Depends(get_db)
+):
+    return controller.read_all(
+        db=db
+    )
 
 
-@router.get("/{menu_item_id}", response_model=schema.MenuItem)
+@router.get(
+    "/search/",
+    response_model=List[schema.MenuItem]
+)
+def search(
+    keyword: Optional[str] = None,
+    category: Optional[str] = None,
+    is_available: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    return controller.search(
+        db=db,
+        keyword=keyword,
+        category=category,
+        is_available=is_available
+    )
+
+
+@router.get(
+    "/{menu_item_id}",
+    response_model=schema.MenuItem
+)
 def read_one(
     menu_item_id: int,
     db: Session = Depends(get_db)
@@ -38,7 +66,10 @@ def read_one(
     )
 
 
-@router.put("/{menu_item_id}", response_model=schema.MenuItem)
+@router.put(
+    "/{menu_item_id}",
+    response_model=schema.MenuItem
+)
 def update(
     menu_item_id: int,
     request: schema.MenuItemUpdate,
@@ -51,7 +82,10 @@ def update(
     )
 
 
-@router.delete("/{menu_item_id}", status_code=204)
+@router.delete(
+    "/{menu_item_id}",
+    status_code=204
+)
 def delete(
     menu_item_id: int,
     db: Session = Depends(get_db)

@@ -1,31 +1,45 @@
-from fastapi.testclient import TestClient
-from ..controllers import orders as controller
-from ..main import app
-import pytest
-from ..models import orders as model
+from datetime import datetime
 
-# Create a test client for the app
+from fastapi.testclient import TestClient
+
+from ..main import app
+from ..controllers import orders as controller
+
+
 client = TestClient(app)
 
 
-@pytest.fixture
-def db_session(mocker):
-    return mocker.Mock()
+def test_read_all_orders_endpoint(monkeypatch):
+    sample_orders = [
+        {
+            "customer_id": 2,
+            "promotion_id": None,
+            "order_type": "Delivery",
+            "total_amount": 24.99,
+            "order_id": 1,
+            "tracking_number": "TEST-TRACK-001",
+            "order_status": "Pending",
+            "order_date": datetime(2026, 7, 31, 12, 0, 0)
+        }
+    ]
 
+    def mock_read_all(db):
+        return sample_orders
 
-def test_create_order(db_session):
-    # Create a sample order
-    order_data = {
-        "customer_name": "John Doe",
-        "description": "Test order"
-    }
+    monkeypatch.setattr(
+        controller,
+        "read_all",
+        mock_read_all
+    )
 
-    order_object = model.Order(**order_data)
+    response = client.get("/orders/")
 
-    # Call the create function
-    created_order = controller.create(db_session, order_object)
+    assert response.status_code == 200
 
-    # Assertions
-    assert created_order is not None
-    assert created_order.customer_name == "John Doe"
-    assert created_order.description == "Test order"
+    response_data = response.json()
+
+    assert len(response_data) == 1
+    assert response_data[0]["order_id"] == 1
+    assert response_data[0]["tracking_number"] == "TEST-TRACK-001"
+    assert response_data[0]["order_status"] == "Pending"
+    assert response_data[0]["total_amount"] == 24.99

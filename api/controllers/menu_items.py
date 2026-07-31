@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
@@ -23,6 +24,7 @@ def create(db: Session, request):
     except SQLAlchemyError as e:
         db.rollback()
         error = str(e.__dict__.get("orig", e))
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
@@ -37,6 +39,47 @@ def read_all(db: Session):
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error
+        )
+
+
+def search(
+    db: Session,
+    keyword=None,
+    category=None,
+    is_available=None
+):
+    try:
+        query = db.query(model.MenuItem)
+
+        if keyword:
+            search_term = f"%{keyword}%"
+
+            query = query.filter(
+                or_(
+                    model.MenuItem.name.ilike(search_term),
+                    model.MenuItem.description.ilike(search_term)
+                )
+            )
+
+        if category:
+            query = query.filter(
+                model.MenuItem.category.ilike(category)
+            )
+
+        if is_available is not None:
+            query = query.filter(
+                model.MenuItem.is_available == is_available
+            )
+
+        return query.all()
+
+    except SQLAlchemyError as e:
+        error = str(e.__dict__.get("orig", e))
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
@@ -61,6 +104,7 @@ def read_one(db: Session, menu_item_id: int):
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
@@ -80,7 +124,7 @@ def update(db: Session, menu_item_id: int, request):
                 detail="Menu item not found"
             )
 
-        update_data = request.dict(exclude_unset=True)
+        update_data = request.model_dump(exclude_unset=True)
 
         item_query.update(
             update_data,
@@ -93,6 +137,7 @@ def update(db: Session, menu_item_id: int, request):
     except SQLAlchemyError as e:
         db.rollback()
         error = str(e.__dict__.get("orig", e))
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
@@ -118,6 +163,7 @@ def delete(db: Session, menu_item_id: int):
     except SQLAlchemyError as e:
         db.rollback()
         error = str(e.__dict__.get("orig", e))
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error
