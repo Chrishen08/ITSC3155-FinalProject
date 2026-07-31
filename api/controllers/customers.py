@@ -2,21 +2,22 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import order_items as model
+from ..models import customers as model
 
 
 def create(db: Session, request):
-    new_item = model.OrderItem(
-        order_id=request.order_id,
-        menu_item_id=request.menu_item_id,
-        quantity=request.quantity,
-        item_price=request.item_price
+    new_customer = model.Customer(
+        first_name=request.first_name,
+        last_name=request.last_name,
+        email=request.email,
+        phone=request.phone,
+        address=request.address
     )
 
     try:
-        db.add(new_item)
+        db.add(new_customer)
         db.commit()
-        db.refresh(new_item)
+        db.refresh(new_customer)
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -27,12 +28,12 @@ def create(db: Session, request):
             detail=error
         )
 
-    return new_item
+    return new_customer
 
 
 def read_all(db: Session):
     try:
-        return db.query(model.OrderItem).all()
+        return db.query(model.Customer).all()
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -43,21 +44,21 @@ def read_all(db: Session):
         )
 
 
-def read_one(db: Session, order_item_id: int):
+def read_one(db: Session, customer_id: int):
     try:
-        item = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        customer = (
+            db.query(model.Customer)
+            .filter(model.Customer.customer_id == customer_id)
             .first()
         )
 
-        if not item:
+        if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Customer not found"
             )
 
-        return item
+        return customer
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -68,30 +69,30 @@ def read_one(db: Session, order_item_id: int):
         )
 
 
-def update(db: Session, order_item_id: int, request):
+def update(db: Session, customer_id: int, request):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        customer_query = (
+            db.query(model.Customer)
+            .filter(model.Customer.customer_id == customer_id)
         )
 
-        item = item_query.first()
+        customer = customer_query.first()
 
-        if not item:
+        if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Customer not found"
             )
 
         update_data = request.dict(exclude_unset=True)
 
-        item_query.update(
+        customer_query.update(
             update_data,
             synchronize_session=False
         )
 
         db.commit()
-        return item_query.first()
+        return customer_query.first()
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -103,22 +104,22 @@ def update(db: Session, order_item_id: int, request):
         )
 
 
-def delete(db: Session, order_item_id: int):
+def delete(db: Session, customer_id: int):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        customer_query = (
+            db.query(model.Customer)
+            .filter(model.Customer.customer_id == customer_id)
         )
 
-        item = item_query.first()
+        customer = customer_query.first()
 
-        if not item:
+        if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Customer not found"
             )
 
-        item_query.delete(synchronize_session=False)
+        customer_query.delete(synchronize_session=False)
         db.commit()
 
     except SQLAlchemyError as e:

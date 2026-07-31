@@ -2,21 +2,21 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import order_items as model
+from ..models import reviews as model
 
 
 def create(db: Session, request):
-    new_item = model.OrderItem(
-        order_id=request.order_id,
+    new_review = model.Review(
+        customer_id=request.customer_id,
         menu_item_id=request.menu_item_id,
-        quantity=request.quantity,
-        item_price=request.item_price
+        rating=request.rating,
+        comment=request.comment
     )
 
     try:
-        db.add(new_item)
+        db.add(new_review)
         db.commit()
-        db.refresh(new_item)
+        db.refresh(new_review)
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -27,12 +27,12 @@ def create(db: Session, request):
             detail=error
         )
 
-    return new_item
+    return new_review
 
 
 def read_all(db: Session):
     try:
-        return db.query(model.OrderItem).all()
+        return db.query(model.Review).all()
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -43,21 +43,21 @@ def read_all(db: Session):
         )
 
 
-def read_one(db: Session, order_item_id: int):
+def read_one(db: Session, review_id: int):
     try:
-        item = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        review = (
+            db.query(model.Review)
+            .filter(model.Review.review_id == review_id)
             .first()
         )
 
-        if not item:
+        if not review:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Review not found"
             )
 
-        return item
+        return review
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -68,30 +68,28 @@ def read_one(db: Session, order_item_id: int):
         )
 
 
-def update(db: Session, order_item_id: int, request):
+def update(db: Session, review_id: int, request):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        review_query = (
+            db.query(model.Review)
+            .filter(model.Review.review_id == review_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not review_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Review not found"
             )
 
         update_data = request.dict(exclude_unset=True)
 
-        item_query.update(
+        review_query.update(
             update_data,
             synchronize_session=False
         )
 
         db.commit()
-        return item_query.first()
+        return review_query.first()
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -103,22 +101,20 @@ def update(db: Session, order_item_id: int, request):
         )
 
 
-def delete(db: Session, order_item_id: int):
+def delete(db: Session, review_id: int):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        review_query = (
+            db.query(model.Review)
+            .filter(model.Review.review_id == review_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not review_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Review not found"
             )
 
-        item_query.delete(synchronize_session=False)
+        review_query.delete(synchronize_session=False)
         db.commit()
 
     except SQLAlchemyError as e:

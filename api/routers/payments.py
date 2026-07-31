@@ -3,60 +3,60 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from ..controllers import orders as controller
-from ..schemas import orders as schema
+from ..controllers import payments as controller
+from ..schemas import payments as schema
 from ..dependencies.database import get_db
 
 
 router = APIRouter(
-    tags=["Orders"],
-    prefix="/orders"
+    tags=["Payments"],
+    prefix="/payments"
 )
 
 
-@router.post("/", response_model=schema.Order)
+@router.post("/", response_model=schema.Payment)
 def create(
-    request: schema.OrderCreate,
+    request: schema.PaymentCreate,
     db: Session = Depends(get_db)
 ):
     return controller.create(db=db, request=request)
 
 
-@router.get("/", response_model=List[schema.Order])
+@router.get("/", response_model=List[schema.Payment])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db=db)
 
 
-@router.get("/{order_id}", response_model=schema.Order)
+@router.get("/{payment_id}", response_model=schema.Payment)
 def read_one(
-    order_id: int,
+    payment_id: int,
     db: Session = Depends(get_db)
 ):
     return controller.read_one(
         db=db,
-        order_id=order_id
+        payment_id=payment_id
     )
 
 
-@router.put("/{order_id}", response_model=schema.Order)
+@router.put("/{payment_id}", response_model=schema.Payment)
 def update(
-    order_id: int,
-    request: schema.OrderUpdate,
+    payment_id: int,
+    request: schema.PaymentUpdate,
     db: Session = Depends(get_db)
 ):
     return controller.update(
         db=db,
-        order_id=order_id,
+        payment_id=payment_id,
         request=request
     )
 
 
-@router.delete("/{order_id}", status_code=204)
+@router.delete("/{payment_id}", status_code=204)
 def delete(
-    order_id: int,
+    payment_id: int,
     db: Session = Depends(get_db)
 ):
     return controller.delete(
         db=db,
-        order_id=order_id
+        payment_id=payment_id
     )

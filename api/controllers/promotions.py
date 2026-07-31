@@ -2,21 +2,23 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import order_items as model
+from ..models import promotions as model
 
 
 def create(db: Session, request):
-    new_item = model.OrderItem(
-        order_id=request.order_id,
-        menu_item_id=request.menu_item_id,
-        quantity=request.quantity,
-        item_price=request.item_price
+    new_promotion = model.Promotion(
+        promo_code=request.promo_code,
+        description=request.description,
+        discount_percentage=request.discount_percentage,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        is_active=request.is_active
     )
 
     try:
-        db.add(new_item)
+        db.add(new_promotion)
         db.commit()
-        db.refresh(new_item)
+        db.refresh(new_promotion)
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -27,12 +29,12 @@ def create(db: Session, request):
             detail=error
         )
 
-    return new_item
+    return new_promotion
 
 
 def read_all(db: Session):
     try:
-        return db.query(model.OrderItem).all()
+        return db.query(model.Promotion).all()
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -43,21 +45,21 @@ def read_all(db: Session):
         )
 
 
-def read_one(db: Session, order_item_id: int):
+def read_one(db: Session, promotion_id: int):
     try:
-        item = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        promotion = (
+            db.query(model.Promotion)
+            .filter(model.Promotion.promotion_id == promotion_id)
             .first()
         )
 
-        if not item:
+        if not promotion:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Promotion not found"
             )
 
-        return item
+        return promotion
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -68,30 +70,28 @@ def read_one(db: Session, order_item_id: int):
         )
 
 
-def update(db: Session, order_item_id: int, request):
+def update(db: Session, promotion_id: int, request):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        promotion_query = (
+            db.query(model.Promotion)
+            .filter(model.Promotion.promotion_id == promotion_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not promotion_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Promotion not found"
             )
 
         update_data = request.dict(exclude_unset=True)
 
-        item_query.update(
+        promotion_query.update(
             update_data,
             synchronize_session=False
         )
 
         db.commit()
-        return item_query.first()
+        return promotion_query.first()
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -103,22 +103,20 @@ def update(db: Session, order_item_id: int, request):
         )
 
 
-def delete(db: Session, order_item_id: int):
+def delete(db: Session, promotion_id: int):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        promotion_query = (
+            db.query(model.Promotion)
+            .filter(model.Promotion.promotion_id == promotion_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not promotion_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Promotion not found"
             )
 
-        item_query.delete(synchronize_session=False)
+        promotion_query.delete(synchronize_session=False)
         db.commit()
 
     except SQLAlchemyError as e:

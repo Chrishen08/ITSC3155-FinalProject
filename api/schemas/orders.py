@@ -1,13 +1,13 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from .order_details import OrderDetail
-
 
 
 class OrderBase(BaseModel):
-    customer_name: str
-    description: Optional[str] = None
+    customer_id: int
+    promotion_id: Optional[int] = None
+    order_type: str
+    total_amount: float
 
 
 class OrderCreate(OrderBase):
@@ -15,14 +15,17 @@ class OrderCreate(OrderBase):
 
 
 class OrderUpdate(BaseModel):
-    customer_name: Optional[str] = None
-    description: Optional[str] = None
+    promotion_id: Optional[int] = None
+    order_type: Optional[str] = None
+    order_status: Optional[str] = None
+    total_amount: Optional[float] = None
 
 
 class Order(OrderBase):
-    id: int
-    order_date: Optional[datetime] = None
-    order_details: list[OrderDetail] = None
+    order_id: int
+    tracking_number: str
+    order_status: str
+    order_date: datetime
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

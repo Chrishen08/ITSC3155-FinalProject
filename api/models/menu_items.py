@@ -16,3 +16,10 @@ class MenuItem(Base):
     is_available = Column(Boolean, nullable=False, default=True)
 
     order_items = relationship("OrderItem", back_populates="menu_item")
+
+    menu_item_ingredients = relationship(
+        "MenuItemIngredient",
+        back_populates="menu_item"
+    )
+
+    reviews = relationship("Review", back_populates="menu_item")

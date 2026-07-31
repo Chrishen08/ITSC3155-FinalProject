@@ -2,21 +2,21 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import order_items as model
+from ..models import payments as model
 
 
 def create(db: Session, request):
-    new_item = model.OrderItem(
+    new_payment = model.Payment(
         order_id=request.order_id,
-        menu_item_id=request.menu_item_id,
-        quantity=request.quantity,
-        item_price=request.item_price
+        payment_method=request.payment_method,
+        payment_status=request.payment_status,
+        amount=request.amount
     )
 
     try:
-        db.add(new_item)
+        db.add(new_payment)
         db.commit()
-        db.refresh(new_item)
+        db.refresh(new_payment)
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -27,12 +27,12 @@ def create(db: Session, request):
             detail=error
         )
 
-    return new_item
+    return new_payment
 
 
 def read_all(db: Session):
     try:
-        return db.query(model.OrderItem).all()
+        return db.query(model.Payment).all()
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -43,21 +43,21 @@ def read_all(db: Session):
         )
 
 
-def read_one(db: Session, order_item_id: int):
+def read_one(db: Session, payment_id: int):
     try:
-        item = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        payment = (
+            db.query(model.Payment)
+            .filter(model.Payment.payment_id == payment_id)
             .first()
         )
 
-        if not item:
+        if not payment:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Payment not found"
             )
 
-        return item
+        return payment
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -68,30 +68,28 @@ def read_one(db: Session, order_item_id: int):
         )
 
 
-def update(db: Session, order_item_id: int, request):
+def update(db: Session, payment_id: int, request):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        payment_query = (
+            db.query(model.Payment)
+            .filter(model.Payment.payment_id == payment_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not payment_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Payment not found"
             )
 
         update_data = request.dict(exclude_unset=True)
 
-        item_query.update(
+        payment_query.update(
             update_data,
             synchronize_session=False
         )
 
         db.commit()
-        return item_query.first()
+        return payment_query.first()
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -103,22 +101,20 @@ def update(db: Session, order_item_id: int, request):
         )
 
 
-def delete(db: Session, order_item_id: int):
+def delete(db: Session, payment_id: int):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        payment_query = (
+            db.query(model.Payment)
+            .filter(model.Payment.payment_id == payment_id)
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not payment_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Payment not found"
             )
 
-        item_query.delete(synchronize_session=False)
+        payment_query.delete(synchronize_session=False)
         db.commit()
 
     except SQLAlchemyError as e:

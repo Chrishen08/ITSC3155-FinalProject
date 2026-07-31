@@ -2,21 +2,20 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import order_items as model
+from ..models import menu_item_ingredients as model
 
 
 def create(db: Session, request):
-    new_item = model.OrderItem(
-        order_id=request.order_id,
+    new_record = model.MenuItemIngredient(
         menu_item_id=request.menu_item_id,
-        quantity=request.quantity,
-        item_price=request.item_price
+        ingredient_id=request.ingredient_id,
+        quantity_required=request.quantity_required
     )
 
     try:
-        db.add(new_item)
+        db.add(new_record)
         db.commit()
-        db.refresh(new_item)
+        db.refresh(new_record)
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -27,12 +26,12 @@ def create(db: Session, request):
             detail=error
         )
 
-    return new_item
+    return new_record
 
 
 def read_all(db: Session):
     try:
-        return db.query(model.OrderItem).all()
+        return db.query(model.MenuItemIngredient).all()
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -43,21 +42,24 @@ def read_all(db: Session):
         )
 
 
-def read_one(db: Session, order_item_id: int):
+def read_one(db: Session, menu_item_ingredient_id: int):
     try:
-        item = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        record = (
+            db.query(model.MenuItemIngredient)
+            .filter(
+                model.MenuItemIngredient.menu_item_ingredient_id
+                == menu_item_ingredient_id
+            )
             .first()
         )
 
-        if not item:
+        if not record:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Record not found"
             )
 
-        return item
+        return record
 
     except SQLAlchemyError as e:
         error = str(e.__dict__.get("orig", e))
@@ -68,30 +70,31 @@ def read_one(db: Session, order_item_id: int):
         )
 
 
-def update(db: Session, order_item_id: int, request):
+def update(db: Session, menu_item_ingredient_id: int, request):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        record_query = (
+            db.query(model.MenuItemIngredient)
+            .filter(
+                model.MenuItemIngredient.menu_item_ingredient_id
+                == menu_item_ingredient_id
+            )
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not record_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Record not found"
             )
 
         update_data = request.dict(exclude_unset=True)
 
-        item_query.update(
+        record_query.update(
             update_data,
             synchronize_session=False
         )
 
         db.commit()
-        return item_query.first()
+        return record_query.first()
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -103,22 +106,23 @@ def update(db: Session, order_item_id: int, request):
         )
 
 
-def delete(db: Session, order_item_id: int):
+def delete(db: Session, menu_item_ingredient_id: int):
     try:
-        item_query = (
-            db.query(model.OrderItem)
-            .filter(model.OrderItem.order_item_id == order_item_id)
+        record_query = (
+            db.query(model.MenuItemIngredient)
+            .filter(
+                model.MenuItemIngredient.menu_item_ingredient_id
+                == menu_item_ingredient_id
+            )
         )
 
-        item = item_query.first()
-
-        if not item:
+        if not record_query.first():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                detail="Record not found"
             )
 
-        item_query.delete(synchronize_session=False)
+        record_query.delete(synchronize_session=False)
         db.commit()
 
     except SQLAlchemyError as e:
